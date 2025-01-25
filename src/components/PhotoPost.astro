@@ -1,5 +1,6 @@
 ---
 import Lightbox from './Lightbox.astro';
+import Badge from './Badge.astro';
 
 interface Props {
   image: string;
@@ -33,7 +34,7 @@ const images = [{
     <p class="text-gray-600 italic">{attribution}</p>
     <div class="flex gap-2 my-2">
       {tags.map(tag => (
-        <a href={`/tags/${tag}`} class="text-blue-600 hover:underline">#{tag}</a>
+        <Badge href={`/tags/${tag}`}>{tag}</Badge>
       ))}
     </div>
     <time class="text-gray-600" datetime={date.toISOString()}>

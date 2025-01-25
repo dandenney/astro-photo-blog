@@ -37,8 +37,8 @@ const { tag } = Astro.params;
 ---
 
 <Layout title={`Posts tagged with #${tag}`}>
-  <main>
-    <h1>Posts tagged with #{tag}</h1>
+  <main class="max-w-3xl mx-auto px-4">
+    <h1>Posts tagged with {tag}</h1>
     
     {page.data.map(entry => {
       if (entry.collection === 'photos') {

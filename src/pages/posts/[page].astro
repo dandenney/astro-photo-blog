@@ -43,7 +43,7 @@ const { page } = Astro.props;
             <div class="mt-2">
               <div class="flex gap-2 my-2">
                 {entry.data.tags.map(tag => (
-                  <a href={`/tags/${tag}`} class="text-blue-600 hover:underline">#{tag}</a>
+                  <a href={`/tags/${tag}`} class="text-blue-600 hover:underline">{tag}</a>
                 ))}
               </div>
               <time class="text-gray-600" datetime={entry.data.date.toISOString()}>

@@ -3,8 +3,10 @@ import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PhotoPost from '../components/PhotoPost.astro';
 import Pagination from '../components/Pagination.astro';
+import type { GetStaticPaths, Page } from 'astro';
+import BlogPost from '../components/BlogPost.astro';
 
-export async function getStaticPaths({ paginate }) {
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
   const photos = await getCollection('photos');
   const posts = await getCollection('blog');
   
@@ -15,11 +17,14 @@ export async function getStaticPaths({ paginate }) {
   return paginate(allContent, { pageSize: 5 });
 }
 
-const { page } = Astro.props;
+interface Props {
+  page: Page<any>;
+}
+const { page } = Astro.props as Props;
 ---
 
 <Layout title="Astro Photo Blog">
-  <main>
+  <main class="max-w-3xl mx-auto px-4">
     {page.data.map(entry => {
       if (entry.collection === 'photos') {
         return (
@@ -32,21 +37,12 @@ const { page } = Astro.props;
         );
       } else {
         return (
-          <article class="blog-post">
-            <h2>
-              <a href={`/blog/${entry.slug}`}>{entry.data.title}</a>
-            </h2>
-            <div class="metadata">
-              <div class="tags">
-                {entry.data.tags.map(tag => (
-                  <a href={`/tags/${tag}`} class="tag">#{tag}</a>
-                ))}
-              </div>
-              <time datetime={entry.data.date.toISOString()}>
-                {entry.data.date.toLocaleDateString()}
-              </time>
-            </div>
-          </article>
+          <BlogPost
+            title={entry.data.title}
+            slug={entry.slug}
+            tags={entry.data.tags}
+            date={entry.data.date}
+          />
         );
       }
     })}
@@ -58,47 +54,3 @@ const { page } = Astro.props;
     />
   </main>
 </Layout>
-
-<style>
-  main {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
-  }
-
-  .blog-post {
-    margin: 2rem 0;
-  }
-
-  .blog-post h2 {
-    margin: 0;
-  }
-
-  .blog-post h2 a {
-    color: #333;
-    text-decoration: none;
-  }
-
-  .blog-post h2 a:hover {
-    text-decoration: underline;
-  }
-
-  .metadata {
-    margin-top: 0.5rem;
-  }
-
-  .tags {
-    display: flex;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-  }
-
-  .tag {
-    color: #0066cc;
-    text-decoration: none;
-  }
-
-  .tag:hover {
-    text-decoration: underline;
-  }
-</style> 
