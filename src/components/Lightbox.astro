@@ -1,0 +1,175 @@
+---
+interface Image {
+  url: string;
+  attribution: string;
+}
+
+interface Props {
+  isOpen: boolean;
+  images: Image[];
+  currentIndex: number;
+}
+
+const { isOpen, images, currentIndex } = Astro.props;
+---
+
+<div 
+  class:list={[
+    "fixed inset-0 bg-black/90 flex items-center justify-center z-50 transition-opacity duration-200",
+    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+  ]}
+  id="lightbox"
+  data-total-images={images.length}
+  data-current-index={currentIndex}
+>
+  <button 
+    class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 p-4"
+    id="close-lightbox"
+    aria-label="Close lightbox"
+  >
+    ×
+  </button>
+
+  {images.length > 1 && (
+    <>
+      <button
+        class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 p-4"
+        id="prev-image"
+        aria-label="Previous image"
+      >
+        ‹
+      </button>
+      <button
+        class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl hover:text-gray-300 p-4"
+        id="next-image"
+        aria-label="Next image"
+      >
+        ›
+      </button>
+    </>
+  )}
+
+  <figure class="max-h-[90vh] max-w-[90vw]">
+    <img 
+      src={images[currentIndex].url} 
+      alt={images[currentIndex].attribution}
+      class="max-h-[90vh] max-w-[90vw] object-contain"
+      id="lightbox-image"
+    />
+    <figcaption class="text-white text-center mt-2 italic">
+      {images[currentIndex].attribution}
+    </figcaption>
+  </figure>
+</div>
+
+<script>
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+  const closeButton = document.getElementById('close-lightbox');
+  const prevButton = document.getElementById('prev-image');
+  const nextButton = document.getElementById('next-image');
+  const lightboxTriggers = document.querySelectorAll('[data-lightbox-trigger]');
+
+  let currentIndex = 0;
+  let totalImages = 0;
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  function updateImage() {
+    const images = JSON.parse(lightbox?.getAttribute('data-images') || '[]');
+    if (images[currentIndex]) {
+      lightboxImage!.src = images[currentIndex].url;
+      lightboxImage!.alt = images[currentIndex].attribution;
+      lightboxImage?.parentElement?.querySelector('figcaption')?.setAttribute(
+        'textContent',
+        images[currentIndex].attribution
+      );
+    }
+  }
+
+  function showPrevImage() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      updateImage();
+    }
+  }
+
+  function showNextImage() {
+    if (currentIndex < totalImages - 1) {
+      currentIndex++;
+      updateImage();
+    }
+  }
+
+  function closeLightbox() {
+    lightbox?.classList.remove('opacity-100');
+    lightbox?.classList.add('opacity-0', 'pointer-events-none');
+  }
+
+  function openLightbox(index: number) {
+    currentIndex = index;
+    updateImage();
+    lightbox?.classList.add('opacity-100');
+    lightbox?.classList.remove('opacity-0', 'pointer-events-none');
+  }
+
+  // Event Listeners
+  closeButton?.addEventListener('click', closeLightbox);
+  prevButton?.addEventListener('click', showPrevImage);
+  nextButton?.addEventListener('click', showNextImage);
+  
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  // Keyboard Navigation
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox?.classList.contains('opacity-0')) {
+      switch(e.key) {
+        case 'Escape':
+          closeLightbox();
+          break;
+        case 'ArrowLeft':
+          showPrevImage();
+          break;
+        case 'ArrowRight':
+          showNextImage();
+          break;
+      }
+    }
+  });
+
+  // Touch Navigation
+  lightbox?.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  lightbox?.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const swipeDistance = touchEndX - touchStartX;
+    
+    if (Math.abs(swipeDistance) > 50) { // Minimum swipe distance
+      if (swipeDistance > 0) {
+        showPrevImage();
+      } else {
+        showNextImage();
+      }
+    }
+  });
+
+  // Initialize lightbox triggers
+  lightboxTriggers.forEach((trigger, index) => {
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      const images = Array.from(lightboxTriggers).map(trigger => ({
+        url: trigger.querySelector('img')?.src,
+        attribution: trigger.querySelector('img')?.alt
+      }));
+      lightbox?.setAttribute('data-images', JSON.stringify(images));
+      totalImages = images.length;
+      openLightbox(index);
+    });
+  });
+</script> 

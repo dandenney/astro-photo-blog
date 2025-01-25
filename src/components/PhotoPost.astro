@@ -1,4 +1,6 @@
 ---
+import Lightbox from './Lightbox.astro';
+
 interface Props {
   image: string;
   attribution: string;
@@ -7,14 +9,26 @@ interface Props {
 }
 
 const { image, attribution, tags, date } = Astro.props;
+
+// Create an array with just this image for the Lightbox
+const images = [{
+  url: image,
+  attribution: attribution
+}];
 ---
 
 <article class="my-8">
-  <img 
-    src={image} 
-    alt={attribution} 
-    class="w-full max-h-[600px] object-cover rounded-lg"
-  />
+  <a 
+    href="#" 
+    data-lightbox-trigger 
+    class="block cursor-zoom-in"
+  >
+    <img 
+      src={image} 
+      alt={attribution} 
+      class="w-full max-h-[600px] object-cover rounded-lg hover:opacity-90 transition-opacity duration-200"
+    />
+  </a>
   <div class="mt-4">
     <p class="text-gray-600 italic">{attribution}</p>
     <div class="flex gap-2 my-2">
@@ -28,39 +42,8 @@ const { image, attribution, tags, date } = Astro.props;
   </div>
 </article>
 
-<style>
-  .photo-post {
-    margin: 2rem 0;
-  }
-  
-  .photo {
-    width: 100%;
-    max-height: 600px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-
-  .metadata {
-    margin-top: 1rem;
-  }
-
-  .attribution {
-    font-style: italic;
-    color: #666;
-  }
-
-  .tags {
-    display: flex;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-  }
-
-  .tag {
-    color: #0066cc;
-    text-decoration: none;
-  }
-
-  .tag:hover {
-    text-decoration: underline;
-  }
-</style> 
+<Lightbox 
+  isOpen={false}
+  images={images}
+  currentIndex={0}
+/> 
