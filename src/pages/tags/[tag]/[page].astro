@@ -1,0 +1,128 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+import PhotoPost from '../../../components/PhotoPost.astro';
+import Pagination from '../../../components/Pagination.astro';
+
+export async function getStaticPaths({ paginate }) {
+  const photos = await getCollection('photos');
+  const posts = await getCollection('blog');
+  
+  const allTags = new Set([
+    ...photos.flatMap(photo => photo.data.tags),
+    ...posts.flatMap(post => post.data.tags)
+  ]);
+
+  return Array.from(allTags).flatMap(tag => {
+    const taggedPhotos = photos.filter(photo => 
+      photo.data.tags.includes(tag)
+    );
+    const taggedPosts = posts.filter(post => 
+      post.data.tags.includes(tag)
+    );
+    
+    const allTaggedContent = [...taggedPhotos, ...taggedPosts].sort((a, b) => 
+      b.data.date.getTime() - a.data.date.getTime()
+    );
+
+    return paginate(allTaggedContent, {
+      params: { tag },
+      pageSize: 5
+    });
+  });
+}
+
+const { page } = Astro.props;
+const { tag } = Astro.params;
+---
+
+<Layout title={`Posts tagged with #${tag}`}>
+  <main>
+    <h1>Posts tagged with #{tag}</h1>
+    
+    {page.data.map(entry => {
+      if (entry.collection === 'photos') {
+        return (
+          <PhotoPost
+            image={entry.data.image}
+            attribution={entry.data.attribution}
+            tags={entry.data.tags}
+            date={entry.data.date}
+          />
+        );
+      } else {
+        return (
+          <article class="blog-post">
+            <h2>
+              <a href={`/blog/${entry.slug}`}>{entry.data.title}</a>
+            </h2>
+            <div class="metadata">
+              <div class="tags">
+                {entry.data.tags.map(t => (
+                  <a href={`/tags/${t}`} class="tag">#{t}</a>
+                ))}
+              </div>
+              <time datetime={entry.data.date.toISOString()}>
+                {entry.data.date.toLocaleDateString()}
+              </time>
+            </div>
+          </article>
+        );
+      }
+    })}
+
+    <Pagination
+      currentPage={page.currentPage}
+      totalPages={page.lastPage}
+      baseUrl={`/tags/${tag}/`}
+    />
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  h1 {
+    margin-bottom: 2rem;
+  }
+
+  .blog-post {
+    margin: 2rem 0;
+  }
+
+  .blog-post h2 {
+    margin: 0;
+  }
+
+  .blog-post h2 a {
+    color: #333;
+    text-decoration: none;
+  }
+
+  .blog-post h2 a:hover {
+    text-decoration: underline;
+  }
+
+  .metadata {
+    margin-top: 0.5rem;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .tag {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .tag:hover {
+    text-decoration: underline;
+  }
+</style> 

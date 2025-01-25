@@ -1,0 +1,64 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import PhotoPost from '../../components/PhotoPost.astro';
+import Pagination from '../../components/Pagination.astro';
+
+export async function getStaticPaths({ paginate }) {
+  const photos = await getCollection('photos');
+  const posts = await getCollection('blog');
+  
+  const allContent = [...photos, ...posts].sort((a, b) => 
+    b.data.date.getTime() - a.data.date.getTime()
+  );
+
+  return paginate(allContent, { pageSize: 10 });
+}
+
+const { page } = Astro.props;
+---
+
+<Layout title="All Posts">
+  <main class="max-w-3xl mx-auto px-4">
+    <h1 class="text-3xl text-gray-800 my-8">All Posts</h1>
+    
+    {page.data.map(entry => {
+      if (entry.collection === 'photos') {
+        return (
+          <PhotoPost
+            image={entry.data.image}
+            attribution={entry.data.attribution}
+            tags={entry.data.tags}
+            date={entry.data.date}
+          />
+        );
+      } else {
+        return (
+          <article class="my-8">
+            <h2>
+              <a href={`/blog/${entry.slug}`} class="text-xl text-gray-800 hover:underline">
+                {entry.data.title}
+              </a>
+            </h2>
+            <div class="mt-2">
+              <div class="flex gap-2 my-2">
+                {entry.data.tags.map(tag => (
+                  <a href={`/tags/${tag}`} class="text-blue-600 hover:underline">#{tag}</a>
+                ))}
+              </div>
+              <time class="text-gray-600" datetime={entry.data.date.toISOString()}>
+                {entry.data.date.toLocaleDateString()}
+              </time>
+            </div>
+          </article>
+        );
+      }
+    })}
+
+    <Pagination
+      currentPage={page.currentPage}
+      totalPages={page.lastPage}
+      baseUrl="/posts/"
+    />
+  </main>
+</Layout> 

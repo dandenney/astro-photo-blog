@@ -1,0 +1,66 @@
+---
+interface Props {
+  image: string;
+  attribution: string;
+  tags: string[];
+  date: Date;
+}
+
+const { image, attribution, tags, date } = Astro.props;
+---
+
+<article class="my-8">
+  <img 
+    src={image} 
+    alt={attribution} 
+    class="w-full max-h-[600px] object-cover rounded-lg"
+  />
+  <div class="mt-4">
+    <p class="text-gray-600 italic">{attribution}</p>
+    <div class="flex gap-2 my-2">
+      {tags.map(tag => (
+        <a href={`/tags/${tag}`} class="text-blue-600 hover:underline">#{tag}</a>
+      ))}
+    </div>
+    <time class="text-gray-600" datetime={date.toISOString()}>
+      {date.toLocaleDateString()}
+    </time>
+  </div>
+</article>
+
+<style>
+  .photo-post {
+    margin: 2rem 0;
+  }
+  
+  .photo {
+    width: 100%;
+    max-height: 600px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .metadata {
+    margin-top: 1rem;
+  }
+
+  .attribution {
+    font-style: italic;
+    color: #666;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .tag {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .tag:hover {
+    text-decoration: underline;
+  }
+</style> 
