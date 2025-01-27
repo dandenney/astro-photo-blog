@@ -7,9 +7,10 @@ interface Props {
   attribution: string;
   tags: string[];
   date: Date;
+  compact?: boolean;
 }
 
-const { image, attribution, tags, date } = Astro.props;
+const { image, attribution, tags, date, compact = false } = Astro.props;
 
 // Create an array with just this image for the Lightbox
 const images = [{
@@ -24,11 +25,13 @@ const images = [{
     data-lightbox-trigger 
     class="block cursor-zoom-in"
   >
-    <img 
-      src={image} 
-      alt={attribution} 
-      class="w-full max-h-[600px] object-cover rounded-lg hover:opacity-90 transition-opacity duration-200"
-    />
+    <div class={compact ? "aspect-[4/3] overflow-hidden rounded-lg" : ""}>
+      <img 
+        src={image} 
+        alt={attribution} 
+        class={`w-full ${compact ? "h-full object-cover" : "max-h-[600px] object-cover rounded-lg"} hover:opacity-90 transition-opacity duration-200`}
+      />
+    </div>
   </a>
   <div class="mt-4">
     <p class="text-gray-600 italic">{attribution}</p>

@@ -6,49 +6,113 @@ import Badge from '../components/Badge.astro';
 const photos = await getCollection('photos');
 const posts = await getCollection('blog');
 
-// Combine and sort all content by date, limit to 5 most recent
+// Combine and sort all content by date
 const allContent = [...photos, ...posts]
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-  .slice(0, 5);
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Split into featured and secondary content
+const [featuredPost, ...remainingPosts] = allContent;
+const secondaryPosts = remainingPosts.slice(0, 2);
+
+// Get all unique tags
+const allTags = [...new Set(
+  allContent.flatMap(content => content.data.tags)
+)].sort();
+
+// Count tag occurrences
+const tagCounts = allContent.reduce((acc: Record<string, number>, content) => {
+  content.data.tags.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
 ---
 
 <Layout title="Astro Photo Blog">
-  <main class="max-w-3xl mx-auto px-4">
+  <main class="max-w-5xl mx-auto px-4">
     <div class="flex justify-between items-center my-8">
       <h2 class="text-2xl text-gray-800">Recent Posts</h2>
       <a href="/posts/1" class="text-blue-600 hover:underline">See all posts →</a>
     </div>
-    {allContent.map(entry => {
-      if (entry.collection === 'photos') {
-        return (
-          <PhotoPost
-            image={entry.data.image}
-            attribution={entry.data.attribution}
-            tags={entry.data.tags}
-            date={entry.data.date}
-          />
-        );
-      } else {
-        return (
-          <article class="my-8">
-            <h2>
-              <a href={`/blog/${entry.slug}`} class="text-xl text-gray-800 hover:underline">
-                {entry.data.title}
-              </a>
-            </h2>
-            <div class="mt-2">
-              <div class="flex gap-2 my-2">
-                {entry.data.tags.map(tag => (
-                  <Badge href={`/tags/${tag}`} class="text-blue-600 hover:underline">{tag}</Badge>
-                ))}
-              </div>
-              <time class="text-gray-600" datetime={entry.data.date.toISOString()}>
-                {entry.data.date.toLocaleDateString()}
-              </time>
+
+    <!-- Featured Post -->
+    <div class="mb-12">
+      {featuredPost.collection === 'photos' ? (
+        <PhotoPost
+          image={featuredPost.data.image}
+          attribution={featuredPost.data.attribution}
+          tags={featuredPost.data.tags}
+          date={featuredPost.data.date}
+        />
+      ) : (
+        <article class="my-8">
+          <h2>
+            <a href={`/blog/${featuredPost.slug}`} class="text-2xl font-bold text-gray-800 hover:underline">
+              {featuredPost.data.title}
+            </a>
+          </h2>
+          <div class="mt-2">
+            <div class="flex gap-2 my-2">
+              {featuredPost.data.tags.map(tag => (
+                <Badge href={`/tags/${tag}`}>{tag}</Badge>
+              ))}
             </div>
-          </article>
-        );
-      }
-    })}
+            <time class="text-gray-600" datetime={featuredPost.data.date.toISOString()}>
+              {featuredPost.data.date.toLocaleDateString()}
+            </time>
+          </div>
+        </article>
+      )}
+    </div>
+
+    <!-- Secondary Posts - 2 Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      {secondaryPosts.map(entry => (
+        <div class="secondary-post">
+          {entry.collection === 'photos' ? (
+            <PhotoPost
+              image={entry.data.image}
+              attribution={entry.data.attribution}
+              tags={entry.data.tags}
+              date={entry.data.date}
+              compact={true}
+            />
+          ) : (
+            <article>
+              <h3>
+                <a href={`/blog/${entry.slug}`} class="text-lg text-gray-800 hover:underline">
+                  {entry.data.title}
+                </a>
+              </h3>
+              <div class="mt-2">
+                <div class="flex gap-2 my-2">
+                  {entry.data.tags.map(tag => (
+                    <Badge href={`/tags/${tag}`}>{tag}</Badge>
+                  ))}
+                </div>
+                <time class="text-gray-600" datetime={entry.data.date.toISOString()}>
+                  {entry.data.date.toLocaleDateString()}
+                </time>
+              </div>
+            </article>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <!-- Tag Cloud -->
+    <div class="mb-12">
+      <h2 class="text-2xl text-gray-800 mb-4">Tags</h2>
+      <div class="flex flex-wrap gap-2">
+        {allTags.map(tag => {
+          const count = tagCounts[tag];
+          return (
+            <Badge href={`/tags/${tag}`}>
+              {tag} ({count})
+            </Badge>
+          );
+        })}
+      </div>
+    </div>
   </main>
 </Layout>
